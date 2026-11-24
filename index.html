@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#9E2A1E">
+<title>KCM Spices</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Mukta:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<!-- ================= LOGIN ================= -->
+<div id="loginView" class="login-wrap hidden">
+  <form class="login" id="loginForm">
+    <div class="brand-big">KCM <span>SPICES</span></div>
+    <p class="tagline">केसीएम मसाले · घर जैसा स्वाद</p>
+    <p>लॉग इन करें · Sign in to record sales</p>
+    <div class="field"><label for="u">Username</label><input id="u" autocomplete="username" autocapitalize="none" required autofocus></div>
+    <div class="field"><label for="p">Password</label><input id="p" type="password" autocomplete="current-password" required></div>
+    <div class="err" id="loginErr"></div>
+    <button class="btn" style="width:100%" id="loginBtn">Sign in</button>
+  </form>
+</div>
+
+<!-- ================= APP ================= -->
+<div id="appView" class="hidden">
+  <header>
+    <div class="logo">🌶️ KCM <span>SPICES</span></div>
+    <nav id="nav"></nav>
+    <div class="user"><span id="whoName"></span><span class="badge" id="whoRole"></span><button class="btn ghost sm" id="logoutBtn">Logout</button></div>
+  </header>
+  <main>
+
+    <!-- ===== Salesperson: My Sales (list of shop sales for a day) ===== -->
+    <section id="mysales" class="page hidden">
+      <div class="head-row">
+        <div><h2>My Sales</h2><p class="sub">Every shop you sold to on this day.</p></div>
+        <button class="btn big-btn" id="newSaleBtn">+ New Sale</button>
+      </div>
+      <div class="card row">
+        <div style="width:200px"><label for="msDate">Date</label><input type="date" id="msDate"></div>
+      </div>
+      <div class="kpis" id="msKpis"></div>
+      <div id="orderList"></div>
+    </section>
+
+    <!-- ===== Salesperson: New / Edit sale ===== -->
+    <section id="saleForm" class="page hidden">
+      <div class="head-row">
+        <div><button class="link" id="sfBack">← Back to My Sales</button><h2 id="sfTitle">New Sale</h2></div>
+      </div>
+
+      <div class="card">
+        <div class="row">
+          <div style="width:200px"><label for="sfDate">Date</label><input type="date" id="sfDate"></div>
+        </div>
+        <label style="margin-top:16px">Shop</label>
+        <div id="shopPicked" class="shop-picked hidden">
+          <div><b id="spName"></b><div class="muted" id="spInfo"></div></div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+            <button class="btn ghost sm" id="spHist" type="button">🏪 इतिहास · History</button>
+            <button class="btn ghost sm" id="spChange">Change</button>
+          </div>
+        </div>
+        <div id="shopPicker">
+          <input id="shopSearch" placeholder="Type shop name or area to search…" autocomplete="off">
+          <div id="shopResults" class="shop-results"></div>
+          <button class="btn ghost sm" id="newShopBtn" type="button">+ Add new shop</button>
+          <form id="newShopForm" class="new-shop hidden">
+            <div class="field"><label for="nsName">Shop name *</label><input id="nsName" maxlength="80" required></div>
+            <div class="field"><label for="nsArea">Area / Location</label><input id="nsArea" maxlength="80" placeholder="e.g. MG Road"></div>
+            <div class="field"><label for="nsPhone">Phone</label><input id="nsPhone" maxlength="20" inputmode="tel"></div>
+            <div class="row"><button class="btn">Save shop</button><button class="btn ghost" type="button" id="nsCancel">Cancel</button></div>
+          </form>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="head-row" style="margin-bottom:10px">
+          <h3 style="margin:0">Products sold</h3>
+          <input id="prodSearch" placeholder="Search product…" style="max-width:220px" autocomplete="off">
+        </div>
+        <p class="sub" style="margin-bottom:10px">Enter price and quantity only for what you sold here. Leave the rest empty.</p>
+        <div class="vhead"><span></span><span>Price ₹</span><span>Qty</span><span>Amount</span></div>
+        <div id="sfItems"></div>
+      </div>
+
+      <div class="sticky-bar">
+        <div class="sb-totals" id="sfTotals"></div>
+        <div class="sb-actions">
+          <button class="btn ghost danger hidden" id="sfDelete">Delete</button>
+          <button class="btn" id="sfSave">Save Sale</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Salesperson: Expenses ===== -->
+    <section id="myexp" class="page hidden">
+      <div class="head-row">
+        <div><h2>My Expenses</h2><p class="sub">Petrol, food and other costs you paid while working.</p></div>
+        <button class="btn big-btn" id="newExpBtn">+ Add Expense</button>
+      </div>
+      <form class="card hidden" id="expForm">
+        <h3 id="efTitle">Add Expense</h3>
+        <label>Category</label>
+        <div class="chips" id="efCats"></div>
+        <div class="row" style="margin-top:14px">
+          <div style="width:160px"><label for="efAmount">Amount ₹</label><input id="efAmount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0"></div>
+          <div style="width:180px"><label for="efDate">Date</label><input id="efDate" type="date"></div>
+        </div>
+        <div class="field" style="margin-top:14px"><label for="efNote">Note <span class="muted" id="efNoteHint">(optional)</span></label>
+          <input id="efNote" maxlength="200" placeholder="e.g. Petrol for bike, lunch near MG Road"></div>
+        <div class="row">
+          <button class="btn" id="efSave">Save Expense</button>
+          <button class="btn ghost" type="button" id="efCancel">Cancel</button>
+          <button class="btn ghost danger hidden" type="button" id="efDelete">Delete</button>
+        </div>
+      </form>
+      <div class="card row"><div style="width:200px"><label for="meDate">Date</label><input type="date" id="meDate"></div></div>
+      <div class="kpis" id="meKpis"></div>
+      <div id="expList"></div>
+    </section>
+
+    <!-- ===== Salesperson: History ===== -->
+    <section id="history" class="page hidden">
+      <h2>My History</h2>
+      <p class="sub">One line per day. Tap a day to see or change its sales.</p>
+      <div class="card table-wrap"><table><thead id="histHead"></thead><tbody id="histBody"></tbody></table></div>
+    </section>
+
+    <!-- ===== Admin: Dashboard ===== -->
+    <section id="dash" class="page hidden">
+      <h2>Dashboard</h2>
+      <p class="sub">Sales across all salespeople and shops.</p>
+      <div class="card row">
+        <div style="width:160px"><label for="dFrom">From</label><input type="date" id="dFrom"></div>
+        <div style="width:160px"><label for="dTo">To</label><input type="date" id="dTo"></div>
+        <div style="width:190px"><label for="dUser">Salesperson</label><select id="dUser"></select></div>
+        <div style="width:220px"><label for="dShop">Shop</label><select id="dShop"></select></div>
+        <button class="btn ghost" id="exportBtn">⬇ Export CSV</button>
+      </div>
+      <div class="kpis" id="dashKpis"></div>
+      <div class="card table-wrap">
+        <h3>Per salesperson</h3>
+        <table><thead id="perUserHead"></thead><tbody id="perUser"></tbody></table>
+      </div>
+      <div class="card table-wrap">
+        <h3>Top shops</h3>
+        <table><thead id="shopReportHead"></thead><tbody id="shopReport"></tbody></table>
+      </div>
+      <div class="card">
+        <h3>Units sold by product</h3>
+        <div class="legend" id="legend"></div>
+        <div class="bars" id="bars"></div>
+      </div>
+      <div class="card table-wrap">
+        <h3>Products: quantity, average selling price, revenue</h3>
+        <table><thead id="prodReportHead"></thead><tbody id="prodReport"></tbody></table>
+      </div>
+      <div class="card">
+        <h3>Revenue by day</h3>
+        <div class="bars" id="dayBars"></div>
+      </div>
+      <div class="card">
+        <h3>All sales <span class="muted" style="font-weight:400;font-size:13px">(latest 200 for these filters; tap to see items)</span></h3>
+        <div id="recent"></div>
+      </div>
+    </section>
+
+    <!-- ===== Salesperson: monthly dashboard ===== -->
+    <section id="mydash" class="page hidden">
+      <div class="head-row">
+        <div><h2>मेरा डैशबोर्ड <small>My Dashboard</small></h2><p class="sub" id="mdSub"></p></div>
+        <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
+          <div><label for="mdMonth">महीना · Month</label><input type="month" id="mdMonth"></div>
+          <button class="btn" id="mdNewSale">+ New Sale</button>
+        </div>
+      </div>
+      <div class="md-hero">
+        <div class="md-label">इस महीने की बिक्री · Sales this month</div>
+        <div class="md-total" id="mdTotal">₹0</div>
+        <div class="md-cmp" id="mdCmp"></div>
+      </div>
+      <div class="kpis" id="mdKpis"></div>
+      <div class="md-zero" id="mdZero"></div>
+      <div class="card">
+        <h3>कैलेंडर <small class="muted">Calendar: tap a day to see its sales</small></h3>
+        <div class="md-legend"><span><i class="sale"></i>बिक्री · Sales</span><span><i class="zero"></i>बिक्री नहीं · Zero sales</span><span><i class="off"></i>छुट्टी · Day off</span><span><i class="future"></i>आने वाले · Upcoming</span></div>
+        <div class="md-cal" id="mdCal"></div>
+      </div>
+    </section>
+
+    <!-- ===== Admin: team calendar ===== -->
+    <section id="teamCal" class="page hidden">
+      <h2>Team calendar <small class="muted">each salesperson's month: sales days and zero-sale days</small></h2>
+      <div class="card row">
+        <div><label for="tcMonth">Month</label><input type="month" id="tcMonth"></div>
+        <label class="tc-toggle"><input type="checkbox" id="tcSundays"> रविवार छुट्टी · Sundays are a day off (not counted as zero-sale days)</label>
+      </div>
+      <div class="md-legend"><span><i class="sale"></i>Sales (darker = more)</span><span><i class="zero"></i>Zero sales</span><span><i class="off"></i>Day off</span><span><i class="future"></i>Upcoming</span></div>
+      <div class="tc-grid" id="tcGrid"></div>
+    </section>
+
+    <!-- ===== Shop history (everyone) ===== -->
+    <section id="shopHist" class="page hidden">
+      <button class="link" id="shBack">← वापस · Back</button>
+      <div class="sh-hero">
+        <div class="sh-name" id="shName"></div>
+        <div class="sh-meta" id="shMeta"></div>
+        <div class="sh-contact" id="shContact"></div>
+      </div>
+      <div class="kpis" id="shKpis"></div>
+      <div class="sh-actions">
+        <button class="btn" id="shNewSale">+ नई बिक्री · New sale for this shop</button>
+        <button class="btn ghost" id="shPoints">🌶️ पॉइंट · Points / WhatsApp</button>
+      </div>
+      <div class="card table-wrap">
+        <h3>क्या खरीदते हैं <small class="muted">What they usually buy</small></h3>
+        <table class="sh-top"><thead><tr><th>Product</th><th class="num">Qty</th><th class="num">Times</th><th class="num">Last ₹</th><th>Last</th></tr></thead><tbody id="shTop"></tbody></table>
+      </div>
+      <h3 style="margin:18px 0 10px">पूरा इतिहास <small class="muted">Full history: every sale, free pack and gift</small></h3>
+      <div id="shTimeline"></div>
+    </section>
+
+    <!-- ===== Salesperson: My Stock ===== -->
+    <section id="stock" class="page hidden">
+      <div class="head-row">
+        <div><h2>मेरा स्टॉक <small>My Stock</small></h2><p class="sub">आज की बिक्री के बाद कितना बचा · What's left after today's sales</p></div>
+        <button class="btn ghost" id="stLimitsBtn">⚙️ लिमिट सेट करें · Set limits</button>
+      </div>
+      <div class="kpis" id="stKpis"></div>
+      <button class="btn tur-btn hidden" id="stRefillAll"></button>
+      <div id="stList"></div>
+      <div class="card st-log"><h3>आज का हिसाब <small class="muted">Today's log</small></h3><div id="stLog"></div></div>
+    </section>
+
+    <!-- ===== Salesperson: stock limits ===== -->
+    <section id="stockLimits" class="page hidden">
+      <button class="link" id="slBack">← मेरा स्टॉक · My Stock</button>
+      <h2>मेरी लिमिट <small>My full stock levels</small></h2>
+      <p class="sub">हर प्रोडक्ट के कितने पैक रखते हैं · How many packs of each you carry when full. 0 = you don't carry it.<br>
+        A new product starts as <b>full</b> from the moment you save its limit.</p>
+      <input id="slSearch" placeholder="🔍 प्रोडक्ट खोजें · Search product" autocomplete="off" style="margin-bottom:10px">
+      <div id="slList"></div>
+      <div class="sticky-bar"><div class="sb-totals" id="slCount"></div><div class="sb-actions"><button class="btn" id="slSave">✔ लिमिट सेव करें · Save limits</button></div></div>
+    </section>
+
+    <!-- ===== Admin: Stock ===== -->
+    <section id="stockAdmin" class="page hidden">
+      <h2>Stock <small class="muted">packs each salesperson is carrying</small></h2>
+      <p class="sub">Each salesperson sets their own full level ("limit"). Shown as <b>left / limit</b>. Red = finished, yellow = low.</p>
+      <div class="card table-wrap"><table><thead id="saHead"></thead><tbody id="saBody"></tbody></table></div>
+      <div class="card table-wrap">
+        <h3>Refills and added packs <span class="muted" style="font-weight:400;font-size:13px">(last 30 days: how many packs each salesperson took)</span></h3>
+        <table><thead><tr><th>Date</th><th>Time</th><th>Salesperson</th><th>Product</th><th>Type</th><th class="num">Packs</th></tr></thead><tbody id="saMoves"></tbody></table>
+      </div>
+    </section>
+
+    <!-- ===== Masala Parivaar: shop picker (salesperson) ===== -->
+    <section id="rwShops" class="page hidden">
+      <h2>मसाला परिवार <small class="muted">Masala Parivaar</small></h2>
+      <p class="sub">दुकान चुनें — पॉइंट देखें, फ्री पैक या गिफ्ट दें, WhatsApp भेजें।<br>Choose a shop to see points, give a free pack or gift, or send WhatsApp.</p>
+      <div class="card">
+        <input id="rwSearch" placeholder="दुकान खोजें · Search shop name or area…" autocomplete="off">
+        <div id="rwShopList" class="shop-results" style="max-height:none"></div>
+      </div>
+    </section>
+
+    <!-- ===== Masala Parivaar: one shop's points (salesperson + admin) ===== -->
+    <section id="rwPanel" class="page hidden">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+        <button class="link" id="rwBack">← वापस · Back</button>
+        <button class="btn ghost sm" id="rwHistBtn">🏪 पूरा इतिहास · Full history</button>
+      </div>
+      <div class="rw-hero">
+        <div class="rw-shop" id="rwShop"></div>
+        <div class="rw-today hidden" id="rwToday"></div>
+        <div class="rw-bal"><span id="rwBal">0</span><small>पॉइंट · points</small></div>
+        <div class="rw-eq" id="rwEq"></div>
+        <div class="rw-bonus"><div class="rw-bar"><span id="rwBar"></span></div><div id="rwBonusTxt"></div></div>
+        <div class="rw-exp hidden" id="rwExp"></div>
+      </div>
+
+      <div class="card">
+        <h3 class="rw-q">अभी लेना है या बचाना है?<small>Take it now or keep saving?</small></h3>
+        <div class="rw-actions">
+          <button class="btn" id="rwPackBtn">🎁 फ्री पैक<small>Free pack</small></button>
+          <button class="btn ghost" id="rwGiftBtn">🏆 गिफ्ट<small>Gift</small></button>
+          <button class="btn ghost" id="rwSaveBtn">💰 बचाएं<small>Keep saving</small></button>
+        </div>
+        <div id="rwPackForm" class="sub-form hidden">
+          <label>कौन सा पैक? · Which free pack?</label>
+          <div class="chips" id="rwSizes"></div>
+          <div class="row" style="margin-top:12px">
+            <div style="flex:1;min-width:180px"><label for="rwProduct">फ्लेवर · Flavour</label><select id="rwProduct"></select></div>
+            <div><label>कितने · How many</label>
+              <div class="stepper"><button type="button" id="rwQtyMinus">−</button><span id="rwQty">1</span><button type="button" id="rwQtyPlus">+</button></div></div>
+          </div>
+          <p id="rwPackCost" class="rw-cost"></p>
+          <button class="btn" id="rwPackConfirm">✔ फ्री पैक दें · Give free pack</button>
+        </div>
+        <div id="rwGiftList" class="sub-form hidden"></div>
+        <div id="rwPending"></div>
+      </div>
+
+      <div class="card">
+        <h3>WhatsApp पर भेजें <small class="muted">Send progress on WhatsApp</small></h3>
+        <div id="rwPhoneRow" class="row hidden" style="margin-bottom:12px">
+          <div style="flex:1;min-width:180px"><label for="rwPhone">दुकान का मोबाइल · Shop mobile number</label><input id="rwPhone" inputmode="tel" maxlength="15" placeholder="98765 43210"></div>
+          <button class="btn ghost" id="rwPhoneSave" type="button">Save number</button>
+        </div>
+        <pre id="rwMsg" class="wa-preview"></pre>
+        <div class="row"><a class="btn wa" id="rwWa" target="_blank" rel="noopener">🟢 WhatsApp पर भेजें · Send</a><button class="btn ghost" id="rwCopy" type="button">Copy text</button></div>
+      </div>
+
+      <form class="card hidden" id="rwAdjust">
+        <h3>पॉइंट सुधारें <small class="muted">Adjust points (admin)</small></h3>
+        <div class="row">
+          <div style="width:140px"><label for="rwAdjPts">Points (+ / −)</label><input id="rwAdjPts" type="number" step="1" placeholder="e.g. 10 or -5"></div>
+          <div style="flex:1;min-width:200px"><label for="rwAdjReason">Reason (required)</label><input id="rwAdjReason" maxlength="200" placeholder="e.g. Welcome bonus, correction for sale on 3 Nov"></div>
+          <button class="btn">Save adjustment</button>
+        </div>
+      </form>
+
+      <div class="card table-wrap">
+        <h3>पासबुक <small class="muted">Passbook</small></h3>
+        <table><thead><tr><th>Date</th><th>Details</th><th class="num">Points</th><th class="num">Balance</th></tr></thead><tbody id="rwHist"></tbody></table>
+      </div>
+    </section>
+
+    <!-- ===== Masala Parivaar: admin ===== -->
+    <section id="rwAdmin" class="page hidden">
+      <h2>मसाला परिवार <small class="muted">Masala Parivaar rewards</small></h2>
+      <p class="sub">Shops earn points on every pack; they take free packs now or save for gifts. Points only, never rupee values, are shown to shops.</p>
+      <div class="card row">
+        <div style="width:160px"><label for="raFrom">From</label><input type="date" id="raFrom"></div>
+        <div style="width:160px"><label for="raTo">To</label><input type="date" id="raTo"></div>
+      </div>
+      <div class="kpis" id="raKpis"></div>
+      <div class="card table-wrap">
+        <h3>🎁 Gift requests <span class="muted" style="font-weight:400;font-size:13px">(approve, then mark delivered and send the congratulations message)</span></h3>
+        <table><thead><tr><th>Date</th><th>Shop</th><th>Gift</th><th class="num">Points</th><th>Status</th><th></th></tr></thead><tbody id="raPending"></tbody></table>
+      </div>
+      <div class="card table-wrap">
+        <h3>Shops' points</h3>
+        <input id="raShopFilter" placeholder="Search shops…" style="max-width:300px;margin-bottom:12px" autocomplete="off">
+        <table><thead><tr><th>Shop</th><th>Area</th><th class="num">Balance</th><th class="num">Next bonus in</th><th class="num">Expiring (30 days)</th><th>Last order</th><th></th></tr></thead><tbody id="raShops"></tbody></table>
+      </div>
+      <div class="card table-wrap">
+        <h3>Recent free packs and gifts</h3>
+        <table><thead><tr><th>Date</th><th>Shop</th><th>What</th><th class="num">Points</th><th>Status</th><th>By</th><th></th></tr></thead><tbody id="raReds"></tbody></table>
+      </div>
+      <div class="card table-wrap">
+        <h3>Point adjustments <span class="muted" style="font-weight:400;font-size:13px">(audit log)</span></h3>
+        <table><thead><tr><th>Date</th><th>Shop</th><th class="num">Points</th><th>Reason</th><th>By</th></tr></thead><tbody id="raAdj"></tbody></table>
+      </div>
+      <div class="card table-wrap">
+        <h3>Gift catalogue <span class="muted" style="font-weight:400;font-size:13px">(cost ₹ is for your reports only, never shown to shops)</span></h3>
+        <form class="row" id="raGiftForm" style="margin-bottom:12px">
+          <div style="flex:1;min-width:150px"><input id="ngHi" maxlength="80" placeholder="Hindi name, e.g. छाता"></div>
+          <div style="flex:1;min-width:150px"><input id="ngEn" maxlength="80" placeholder="English name, e.g. Umbrella"></div>
+          <div style="width:110px"><input id="ngPts" type="number" min="1" placeholder="Points"></div>
+          <div style="width:110px"><input id="ngCost" type="number" min="0" placeholder="Cost ₹"></div>
+          <button class="btn">+ Add gift</button>
+        </form>
+        <table><thead><tr><th>Hindi</th><th>English</th><th class="num">Points</th><th class="num">Cost ₹</th><th>Active</th></tr></thead><tbody id="raGifts"></tbody></table>
+      </div>
+      <form class="card" id="raConfig">
+        <h3>Reward rules</h3>
+        <p class="sub" style="margin-bottom:12px">Changing a rule recalculates every shop's points from the start date. Settings that would make a shop's points negative are refused.</p>
+        <div id="raCfgFields"></div>
+        <button class="btn" style="margin-top:12px">Save rules</button>
+      </form>
+    </section>
+
+    <!-- ===== Admin: Expenses ===== -->
+    <section id="expenses" class="page hidden">
+      <h2>Expenses</h2>
+      <p class="sub">Expenses entered by salespeople (petrol, food and other costs).</p>
+      <div class="card row">
+        <div style="width:160px"><label for="aeFrom">From</label><input type="date" id="aeFrom"></div>
+        <div style="width:160px"><label for="aeTo">To</label><input type="date" id="aeTo"></div>
+        <div style="width:190px"><label for="aeUser">Salesperson</label><select id="aeUser"></select></div>
+        <div style="width:170px"><label for="aeCat">Category</label><select id="aeCat"></select></div>
+        <button class="btn ghost" id="aeExport">⬇ Export CSV</button>
+      </div>
+      <div class="kpis" id="aeKpis"></div>
+      <div class="card table-wrap">
+        <h3>Per salesperson</h3>
+        <table><thead id="aeUserHead"></thead><tbody id="aeUsers"></tbody></table>
+      </div>
+      <div class="card table-wrap">
+        <h3>All expenses <span class="muted" style="font-weight:400;font-size:13px">(latest 500 for these filters)</span></h3>
+        <table><thead><tr><th>Date</th><th>Salesperson</th><th>Category</th><th>Note</th><th class="num">Amount ₹</th></tr></thead><tbody id="aeList"></tbody></table>
+      </div>
+      <div class="card" id="catCard">
+        <h3>Expense categories</h3>
+        <p class="sub" style="margin-bottom:12px">Salespeople choose from these. Click a name to rename it (past expenses are renamed too). Removing a category hides it for new expenses; past expenses keep it. <b id="noteCatName">Other</b> always needs a note.</p>
+        <form class="row" id="addCatForm" style="margin-bottom:14px">
+          <div style="flex:1;min-width:180px"><input id="ncName" maxlength="40" placeholder="New category, e.g. Hotel, Mobile recharge"></div>
+          <button class="btn">+ Add category</button>
+        </form>
+        <div class="table-wrap"><table><thead><tr><th>Category</th><th class="num">Expenses recorded</th><th></th></tr></thead><tbody id="catBody"></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- ===== Admin: Shops ===== -->
+    <section id="shops" class="page hidden">
+      <h2>Shops</h2>
+      <p class="sub">Shops are added by salespeople when they make a sale. Here you can fix names, areas and phone numbers, or remove duplicates. Removed shops stay in past reports.</p>
+      <div class="card">
+        <input id="shopFilter" placeholder="Search shops…" style="max-width:320px;margin-bottom:14px" autocomplete="off">
+        <div class="table-wrap">
+        <table><thead><tr><th>Shop name</th><th>Area</th><th>Phone</th><th>Added by</th><th class="num">Sales</th><th class="num">Revenue ₹</th><th>Last sale</th><th></th></tr></thead><tbody id="shopBody"></tbody></table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Admin: Products ===== -->
+    <section id="prods" class="page hidden">
+      <h2>Products</h2>
+      <p class="sub">Add a product once and it is automatically available in every size (<span id="sizeList"></span>). Click a name to rename it. Prices are entered by salespeople when they record sales.</p>
+      <div class="card">
+        <form class="row" id="addProdForm" style="margin-bottom:18px">
+          <div style="flex:1;min-width:200px"><label for="npName">New product</label><input id="npName" maxlength="80" placeholder="Product name"></div>
+          <button class="btn">+ Add product</button>
+        </form>
+        <div class="table-wrap">
+        <table><thead id="prodHead"></thead><tbody id="prodBody"></tbody></table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Admin: Users ===== -->
+    <section id="users" class="page hidden">
+      <h2>Users</h2>
+      <p class="sub">Create logins for salespeople. Deactivated users cannot log in, but their past sales are kept.</p>
+      <div class="card">
+        <form class="row" id="addUserForm" style="margin-bottom:18px">
+          <div style="flex:1;min-width:160px"><label for="nuName">Full name</label><input id="nuName" maxlength="80" required></div>
+          <div style="width:160px"><label for="nuUser">Username</label><input id="nuUser" maxlength="30" required autocomplete="off" autocapitalize="none"></div>
+          <div style="width:160px"><label for="nuPass">Password</label><input id="nuPass" type="text" minlength="6" required autocomplete="new-password"></div>
+          <div style="width:140px"><label for="nuRole">Role</label><select id="nuRole"><option value="sales">Salesperson</option><option value="admin">Admin</option></select></div>
+          <button class="btn">+ Add user</button>
+        </form>
+        <div class="table-wrap">
+        <table><thead><tr><th>Name</th><th>Username</th><th>Role</th><th>Status</th><th></th></tr></thead><tbody id="userBody"></tbody></table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Everyone: Account ===== -->
+    <section id="account" class="page hidden">
+      <h2>My Account</h2>
+      <p class="sub">Change your password.</p>
+      <form class="card" id="pwForm" style="max-width:420px">
+        <div class="field"><label for="pwCur">Current password</label><input id="pwCur" type="password" required autocomplete="current-password"></div>
+        <div class="field"><label for="pwNew">New password (min 6 characters)</label><input id="pwNew" type="password" minlength="6" required autocomplete="new-password"></div>
+        <div class="field"><label for="pwNew2">Repeat new password</label><input id="pwNew2" type="password" minlength="6" required autocomplete="new-password"></div>
+        <button class="btn">Change password</button>
+      </form>
+    </section>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+<script src="/static/app.js"></script>
+</body>
+</html>

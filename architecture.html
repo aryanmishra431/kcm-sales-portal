@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KCM Data Architecture</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Mukta:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#FFF7E8;--ink:#2B1B13;--muted:#6B5345;--line:#eadfcd;--pri:#9E2A1E;--tur:#F2B33D;--leaf:#3E7B3A;--blue:#2f5f9e;--violet:#6d3fb8}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Mukta",sans-serif;padding:24px}
+  .wrap{max-width:1080px;margin:0 auto}
+  h1{font-family:"Baloo 2";color:var(--pri);margin:0 0 4px;font-size:32px}
+  h2{font-family:"Baloo 2";margin:0 0 4px;font-size:24px}
+  .lead{color:var(--muted);margin:0 0 22px;font-size:17px}
+  section{background:#fff;border:1px solid var(--line);border-radius:18px;padding:22px;margin-bottom:24px}
+  .sub{color:var(--muted);margin:0 0 16px}
+  .dia{position:relative}
+  .dia svg.wires{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible;z-index:2}
+  .node{position:relative;z-index:1;border-radius:14px;padding:12px 14px;border:2px solid var(--line);background:#fff;font-size:14px;line-height:1.4}
+  .node b{font-size:15px}
+  .node small{color:var(--muted);display:block}
+  /* architecture */
+  .arch{display:grid;grid-template-columns:200px 150px 1fr;gap:34px;align-items:center}
+  .col{display:flex;flex-direction:column;gap:22px}
+  .user{background:#fffaf0;border-color:#f0d08a}
+  .net{background:#eef4fb;border-color:#b8cde6;text-align:center;padding:22px 10px}
+  .server{border:2px dashed var(--pri);border-radius:18px;padding:16px;background:#fff8f5}
+  .server>.ttl{font-family:"Baloo 2";font-weight:800;color:var(--pri);font-size:17px;margin-bottom:10px}
+  .srv-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px 28px;align-items:center}
+  .code{background:#f4effc;border-color:#cbb6ef}
+  .db{background:#eaf5e8;border-color:var(--leaf);text-align:center}
+  .db .ic{font-size:30px}
+  .pages{background:#eef4fb;border-color:#b8cde6}
+  .backup{margin-top:22px;display:flex;justify-content:flex-end}
+  .backup .node{background:#f7f7f7;border-style:dashed;max-width:420px}
+  /* data model */
+  .er{display:grid;grid-template-columns:repeat(4,1fr);gap:26px 34px}
+  .t{border-radius:12px;border:2px solid;overflow:hidden;background:#fff;position:relative;z-index:1;font-size:13px}
+  .t .h{padding:6px 10px;font-weight:800;font-family:"Baloo 2";font-size:15px;color:#fff;display:flex;justify-content:space-between;align-items:center}
+  .t .h span{font-family:"Mukta";font-weight:600;font-size:11px;opacity:.9}
+  .t ul{list-style:none;margin:0;padding:6px 10px 8px}
+  .t li{padding:1px 0;border-bottom:1px dotted #eee}
+  .t li:last-child{border:0}
+  .t li.fk{color:var(--blue);font-weight:600}
+  .t li.pk{font-weight:700}
+  .g-core{border-color:#9E2A1E}.g-core .h{background:#9E2A1E}
+  .g-sale{border-color:#c4472f}.g-sale .h{background:#c4472f}
+  .g-rew{border-color:#c27c0e}.g-rew .h{background:#c27c0e}
+  .g-stock{border-color:#3E7B3A}.g-stock .h{background:#3E7B3A}
+  .g-exp{border-color:#6d3fb8}.g-exp .h{background:#6d3fb8}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:14px;margin:0 0 14px}
+  .legend i{display:inline-block;width:14px;height:14px;border-radius:4px;margin-right:6px;vertical-align:-2px}
+  /* flow */
+  .flow{display:flex;flex-direction:column;align-items:center;gap:0}
+  .step{width:min(620px,100%);border-radius:14px;padding:12px 16px;border:2px solid var(--line);background:#fff;font-size:15px;position:relative}
+  .step .n{position:absolute;left:-14px;top:12px;width:28px;height:28px;border-radius:50%;background:var(--pri);color:#fff;display:grid;place-items:center;font-weight:800;font-size:14px}
+  .step > b{display:block;font-size:16px}
+  .step small{color:var(--muted)}
+  .arrow{height:30px;width:2px;background:var(--pri);position:relative;margin:0 auto}
+  .arrow:after{content:"";position:absolute;bottom:-2px;left:-6px;border:7px solid transparent;border-top:9px solid var(--pri)}
+  .split{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;width:min(820px,100%)}
+  .split .step{width:auto}
+  .s-write{background:#fff8f5;border-color:#e7b3a8}
+  .s-calc{background:#fffaf0;border-color:#f0d08a}
+  .s-out{background:#eaf5e8;border-color:#bfe0b9}
+  table{width:100%;border-collapse:collapse;font-size:15px}
+  th,td{padding:9px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+  th{background:#fdf8ef;font-size:13px;text-transform:uppercase;color:var(--muted)}
+  .tag{display:inline-block;border-radius:99px;padding:1px 10px;font-size:12px;font-weight:700}
+  .tag.s{background:#eaf5e8;color:var(--leaf)}.tag.c{background:#fff3cd;color:#7a4b00}
+  @media (max-width:820px){.arch{grid-template-columns:1fr}.er{grid-template-columns:1fr 1fr}.split{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🌶️ KCM Spices: where your data lives</h1>
+  <p class="lead">All data is in <b>one database file, <code>sales.db</code></b>, on your PythonAnywhere server. Phones and browsers only show screens; they don't keep the data.</p>
+
+  <!-- 1. Architecture -->
+  <section id="s1">
+    <h2>① System architecture</h2>
+    <p class="sub">How a phone talks to the server and where everything is saved.</p>
+    <div class="dia" id="d1">
+      <svg class="wires"></svg>
+      <div class="arch">
+        <div class="col">
+          <div class="node user" id="a-shop" style="background:#f2fbf0;border-color:#bfe0b9"><b>🏪 Shop owner</b><small>gets WhatsApp messages only (no login)</small></div>
+          <div class="node user" id="a-sp"><b>📱 Salesperson's phone</b><small>browser: login, sales, stock, expenses, points · sends WhatsApp ↑</small></div>
+          <div class="node user" id="a-ad"><b>💻 Admin (you)</b><small>browser: dashboard, calendar, rewards, users</small></div>
+        </div>
+        <div class="col">
+          <div class="node net" id="a-net"><b>🌐 Internet</b><small>HTTPS (encrypted)<br>aryanmishra06<br>.pythonanywhere.com</small></div>
+        </div>
+        <div class="server" id="a-srv">
+          <div class="ttl">☁️ PythonAnywhere server (your account)</div>
+          <div class="srv-grid">
+            <div class="node pages" id="a-pages"><b>🖥️ Screens</b><small>static/index.html, app.js, style.css: sent to the phone and shown there</small></div>
+            <div class="node" id="a-key" style="background:#f7f7f7"><b>🔑 .secret_key</b><small>signs login cookies, so nobody can fake a login</small></div>
+            <div class="node code" id="a-app"><b>⚙️ app.py</b><small>the brain (Python/Flask): checks logins and permissions, validates data, reads/writes the database</small></div>
+            <div class="node db" id="a-db"><div class="ic">🗄️</div><b>sales.db</b><small>SQLite database: one file with 14 tables<br>/home/aryanmishra06/sales-app/</small></div>
+            <div class="node code" id="a-rew"><b>🌶️ rewards.py</b><small>points calculator (earn, bonus, expiry), tested</small></div>
+            <div class="node" id="a-bak" style="background:#f7f7f7;border-style:dashed"><b>💾 Your backup</b><small>download sales.db weekly → computer / Google Drive</small></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. Data model -->
+  <section id="s2">
+    <h2>② Data model: the 14 tables inside sales.db</h2>
+    <p class="sub">Each box is a table (like a sheet in Excel). <span style="color:#2f5f9e;font-weight:700">Blue rows → point to another table</span> (e.g. "salesperson → users"). Arrows show the main links; every "→ users" row links to the person who did it.</p>
+    <div class="legend">
+      <span><i style="background:#9E2A1E"></i>People & products</span><span><i style="background:#c4472f"></i>Shops & sales</span>
+      <span><i style="background:#c27c0e"></i>मसाला परिवार rewards</span><span><i style="background:#3E7B3A"></i>Stock</span><span><i style="background:#6d3fb8"></i>Expenses</span>
+    </div>
+    <div class="dia" id="d2">
+      <svg class="wires"></svg>
+      <div class="er">
+        <!-- row 1 -->
+        <div class="t g-core" id="t-users"><div class="h">users <span>logins</span></div><ul>
+          <li class="pk">id</li><li>username</li><li>password <i>(scrambled hash)</i></li><li>full name</li><li>role: admin / sales</li><li>active</li></ul></div>
+        <div class="t g-sale" id="t-shops"><div class="h">shops <span>customers</span></div><ul>
+          <li class="pk">id</li><li>name, area, phone</li><li class="fk">added by → users</li><li>active</li></ul></div>
+        <div class="t g-rew" id="t-red"><div class="h">redemptions <span>free packs & gifts</span></div><ul>
+          <li class="pk">id</li><li class="fk">shop → shops</li><li>kind: pack / gift</li><li class="fk">product + size / gift → gifts</li><li>points, status, date</li><li class="fk">given by → users</li></ul></div>
+        <div class="t g-stock" id="t-lim"><div class="h">stock_limits <span>full level</span></div><ul>
+          <li class="fk">salesperson → users</li><li class="fk">product size → variants</li><li>limit (e.g. 10)</li><li>started at</li></ul></div>
+        <!-- row 2 -->
+        <div class="t g-core" id="t-prod"><div class="h">products</div><ul>
+          <li class="pk">id</li><li>name (Garam Masala…)</li><li>active</li></ul></div>
+        <div class="t g-sale" id="t-orders"><div class="h">orders <span>one sale at a shop</span></div><ul>
+          <li class="pk">id</li><li class="fk">salesperson → users</li><li class="fk">shop → shops</li><li>sale date</li></ul></div>
+        <div class="t g-rew" id="t-adj"><div class="h">point_adjustments</div><ul>
+          <li class="fk">shop → shops</li><li>points (+/−)</li><li>reason (required)</li><li class="fk">by → users</li></ul></div>
+        <div class="t g-stock" id="t-moves"><div class="h">stock_moves <span>refill / ＋ / −</span></div><ul>
+          <li class="fk">salesperson → users</li><li class="fk">product size → variants</li><li>qty (+/−), kind, time</li></ul></div>
+        <!-- row 3 -->
+        <div class="t g-core" id="t-var"><div class="h">product_variants <span>sizes</span></div><ul>
+          <li class="pk">id</li><li class="fk">product → products</li><li>size: BIG / SMALL / 20 BIG</li></ul></div>
+        <div class="t g-sale" id="t-items"><div class="h">order_items <span>what was sold</span></div><ul>
+          <li class="fk">order → orders</li><li class="fk">product size → variants</li><li>quantity</li><li>price (in paise)</li></ul></div>
+        <div class="t g-rew" id="t-gifts"><div class="h">gifts</div><ul>
+          <li class="pk">id</li><li>name (Hindi / English)</li><li>points cost</li><li>₹ cost (admin only)</li></ul></div>
+        <div class="t g-exp" id="t-exp"><div class="h">expenses</div><ul>
+          <li class="fk">salesperson → users</li><li>date, amount, note</li><li class="fk">category → categories</li></ul></div>
+        <!-- row 4 -->
+        <div></div><div></div>
+        <div class="t g-rew" id="t-set"><div class="h">reward_settings</div><ul>
+          <li>points rules (JSON)</li><li>Sundays on/off</li></ul></div>
+        <div class="t g-exp" id="t-cat"><div class="h">expense_categories</div><ul>
+          <li>name (Petrol, Food…)</li><li>order, active</li></ul></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. Flow of a sale -->
+  <section id="s3">
+    <h2>③ What happens when a salesperson taps "Save Sale"</h2>
+    <p class="sub">Only the sale itself is written. Points, stock and dashboards are calculated from it, so they always match.</p>
+    <div class="flow">
+      <div class="step"><span class="n">1</span><b>📱 Salesperson fills the sale</b><small>shop + products + price + quantity → taps Save</small></div>
+      <div class="arrow"></div>
+      <div class="step"><span class="n">2</span><b>🌐 Sent over the internet (HTTPS)</b><small>with their login cookie, so the server knows who it is</small></div>
+      <div class="arrow"></div>
+      <div class="step" style="background:#f4effc;border-color:#cbb6ef"><span class="n">3</span><b>⚙️ app.py checks it</b><small>logged in? correct role? date not in the future? quantities and prices valid? missing price? → otherwise it's refused</small></div>
+      <div class="arrow"></div>
+      <div class="step s-write"><span class="n">4</span><b>🗄️ Saved in sales.db</b><small>1 row in <b>orders</b> (who, which shop, date) + 1 row per product in <b>order_items</b> (qty, price)</small></div>
+      <div class="arrow"></div>
+      <div class="split">
+        <div class="step s-calc"><b>🌶️ Points</b><small>rewards.py recalculates the shop's balance from all its orders, redemptions and adjustments</small></div>
+        <div class="step s-calc"><b>📦 Stock</b><small>left = stock moves − packs sold − free packs, for this salesperson</small></div>
+        <div class="step s-calc"><b>📊 Dashboards</b><small>month totals, zero-sale days and the calendar are added up from orders</small></div>
+      </div>
+      <div class="arrow"></div>
+      <div class="step s-out"><span class="n">5</span><b>📱 Phone shows the result</b><small>"+20 points", "अभी लेना है या बचाना है?", the WhatsApp button (the message is sent from the phone's own WhatsApp and is <b>not</b> stored on the server)</small></div>
+    </div>
+  </section>
+
+  <!-- 4. Stored vs calculated -->
+  <section id="s4">
+    <h2>④ Stored vs calculated</h2>
+    <p class="sub">Numbers that are calculated can't go wrong or drift: they are re-added from the saved records every time you open a screen.</p>
+    <table>
+      <thead><tr><th>Information</th><th>How</th><th>Comes from</th></tr></thead>
+      <tbody>
+        <tr><td>Sales (shop, products, qty, price, date, who)</td><td><span class="tag s">Stored</span></td><td>orders + order_items</td></tr>
+        <tr><td>Shops, products, sizes, users, gifts, expense categories</td><td><span class="tag s">Stored</span></td><td>their own tables</td></tr>
+        <tr><td>Expenses</td><td><span class="tag s">Stored</span></td><td>expenses</td></tr>
+        <tr><td>Free packs and gifts given, admin point corrections</td><td><span class="tag s">Stored</span></td><td>redemptions, point_adjustments</td></tr>
+        <tr><td>Stock limits, refills, ＋/−</td><td><span class="tag s">Stored</span></td><td>stock_limits, stock_moves</td></tr>
+        <tr><td>🌶️ A shop's points balance, bonus, expiry</td><td><span class="tag c">Calculated</span></td><td>orders + redemptions + adjustments + rules (rewards.py)</td></tr>
+        <tr><td>📦 Stock left</td><td><span class="tag c">Calculated</span></td><td>stock_moves − order_items − free packs</td></tr>
+        <tr><td>📊 Dashboard totals, zero-sale days, calendar, reports, CSV</td><td><span class="tag c">Calculated</span></td><td>orders, order_items, expenses</td></tr>
+        <tr><td>Passwords</td><td><span class="tag s">Stored scrambled</span></td><td>users (one-way hash: nobody can read them back)</td></tr>
+      </tbody>
+    </table>
+  </section>
+</div>
+
+<script>
+// draw arrows between boxes: [from, to, colour, dashed?, label?]
+function wire(diaId, pairs) {
+  const dia = document.getElementById(diaId), svg = dia.querySelector('svg.wires'), base = dia.getBoundingClientRect();
+  const ns = 'http://www.w3.org/2000/svg';
+  svg.innerHTML = `<defs>${[...new Set(pairs.map(p => p[2]))].map((c, i) => `<marker id="m${diaId}${i}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="${c}"/></marker>`).join('')}</defs>`;
+  const cols = [...new Set(pairs.map(p => p[2]))];
+  pairs.forEach(([a, b, color, dashed, label, both]) => {
+    const A = document.getElementById(a).getBoundingClientRect(), B = document.getElementById(b).getBoundingClientRect();
+    const ac = {x: A.left + A.width / 2 - base.left, y: A.top + A.height / 2 - base.top}, bc = {x: B.left + B.width / 2 - base.left, y: B.top + B.height / 2 - base.top};
+    const edge = (R, c, toward) => { // point on the rectangle edge facing `toward`
+      const dx = toward.x - c.x, dy = toward.y - c.y, hw = R.width / 2, hh = R.height / 2;
+      const s = Math.min(hw / Math.abs(dx || 1e-9), hh / Math.abs(dy || 1e-9));
+      return {x: c.x + dx * s, y: c.y + dy * s};
+    };
+    const p1 = edge(A, ac, bc), p2 = edge(B, bc, ac);
+    const path = document.createElementNS(ns, 'path');
+    const mx = (p1.x + p2.x) / 2, my = (p1.y + p2.y) / 2;
+    const horiz = Math.abs(p2.x - p1.x) > Math.abs(p2.y - p1.y);
+    const d = horiz ? `M${p1.x},${p1.y} C${mx},${p1.y} ${mx},${p2.y} ${p2.x},${p2.y}` : `M${p1.x},${p1.y} C${p1.x},${my} ${p2.x},${my} ${p2.x},${p2.y}`;
+    path.setAttribute('d', d); path.setAttribute('fill', 'none'); path.setAttribute('stroke', color); path.setAttribute('stroke-width', '2.2');
+    if (dashed) path.setAttribute('stroke-dasharray', '6 5');
+    const mid = `url(#m${diaId}${cols.indexOf(color)})`;
+    path.setAttribute('marker-end', mid); if (both) path.setAttribute('marker-start', mid);
+    svg.appendChild(path);
+    if (label) {
+      const t = document.createElementNS(ns, 'text'); t.setAttribute('x', mx); t.setAttribute('y', my - 6); t.setAttribute('text-anchor', 'middle');
+      t.setAttribute('font-size', '12'); t.setAttribute('font-weight', '700'); t.setAttribute('fill', color); t.setAttribute('paint-order', 'stroke');
+      t.setAttribute('stroke', '#fff'); t.setAttribute('stroke-width', '4'); t.textContent = label; svg.appendChild(t);
+    }
+  });
+}
+function drawAll() {
+  wire('d1', [
+    ['a-sp', 'a-net', '#9E2A1E', false, '', true], ['a-ad', 'a-net', '#9E2A1E', false, '', true],
+    ['a-net', 'a-pages', '#2f5f9e', false, 'screens', false], ['a-net', 'a-app', '#9E2A1E', false, '', true],
+    ['a-app', 'a-db', '#3E7B3A', false, '', true], ['a-app', 'a-rew', '#6d3fb8', false, 'points', true],
+    ['a-key', 'a-app', '#888', true, '', false], ['a-db', 'a-bak', '#888', true, 'weekly download', false],
+    ['a-sp', 'a-shop', '#25a244', true, '', false],
+  ]);
+  const B = '#2f5f9e';
+  wire('d2', [
+    ['t-shops', 't-users', B], ['t-orders', 't-users', B], ['t-orders', 't-shops', B], ['t-items', 't-orders', B],
+    ['t-items', 't-var', B], ['t-var', 't-prod', B], ['t-red', 't-shops', B], ['t-adj', 't-shops', B], ['t-exp', 't-cat', B],
+  ]);
+}
+document.fonts.ready.then(drawAll); window.addEventListener('resize', drawAll); setTimeout(drawAll, 600);
+</script>
+</body>
+</html>
