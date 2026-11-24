@@ -16,7 +16,7 @@ and performance**, in **Hindi + English**, and works on low-cost Android phones.
 
 ## The problem
 
-- 2 field salespeople cover ~80 small shops; sales were written on paper and totalled by hand.
+- 20+ field salespeople cover ~500 small shops; sales were written on paper and totalled by hand.
 - Shops rarely reordered, half the orders were ≤ ₹200, and prices varied by salesperson.
 - No view of who sold what, where, or which days had no sales at all.
 
